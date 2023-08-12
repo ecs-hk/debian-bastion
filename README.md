@@ -61,7 +61,7 @@ hey_you_read_this: |
 ## Bastion host deployment
 
 **Important**: after running the Ansible playbook as specified below, do not disconnect from the system, or you will be locked out. Instead:
-* run all the steps that follow in this section
+* complete all the steps that follow in this section
 * test a new SSH session without disconnecting from the current one
 
 Only disconnect from the system after verifying that you can still SSH in.
