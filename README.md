@@ -23,7 +23,7 @@ sudo apt install python3-pip python3-venv
 
 ### Prepare venv and install Ansible
 
-Clone this repo, then run prep script, which:
+Clone this repo, then run the prep script, which:
 * sets up a venv
 * installs Ansible within that venv
 
@@ -68,7 +68,7 @@ Only disconnect from the system after verifying that you can still SSH in.
 
 ### Run the Ansible playbook
 
-Run this as root, or as an account that is a full sudoer:
+Run the playbook helper script as root, or as an account that is a full sudoer:
 ```bash
 ./bin/run-playbook
 ```
