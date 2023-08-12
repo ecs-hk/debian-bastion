@@ -23,7 +23,7 @@ sudo apt install python3-pip python3-venv
 
 ### Prepare venv and install Ansible
 
-Clone this repo, then run prep script, which:
+Clone this repo, then run the prep script, which:
 * sets up a venv
 * installs Ansible within that venv
 
@@ -61,26 +61,24 @@ hey_you_read_this: |
 ## Bastion host deployment
 
 **Important**: after running the Ansible playbook as specified below, do not disconnect from the system, or you will be locked out. Instead:
-* run all the steps that follow in this section
+* complete all the steps that follow in this section
 * test a new SSH session without disconnecting from the current one
 
-Only disconnect from the system after fully verifying that you can still SSH in.
+Only disconnect from the system after verifying that you can still SSH in.
 
 ### Run the Ansible playbook
 
-Run this as root, or as an account that is a full sudoer:
+Run the playbook helper script as root, or as an account that is a full sudoer:
 ```bash
 ./bin/run-playbook
 ```
 
 ### Configure authentication for shell account
 
-The ssh daemon for the bastion host requires both pubkey authentication and password authentication for a successful login.
-
-Set a password for `someguy` shell account:
-```bash
-sudo passwd someguy
-```
+Note that the ssh daemon for the bastion host requires *all of the following* in order to log in:
+1. successful pubkey authentication; and
+2. successful password authentication; and
+3. membership in the allowed SSH group
 
 Install SSH public key for `someguy` shell account (and ensure correct permissions):
 ```bash
@@ -88,6 +86,11 @@ sudo cp someguy.pub /usr/local/etc/ssh/authorized_keys.someguy
 ```
 ```bash
 sudo chmod 644 /usr/local/etc/ssh/authorized_keys.someguy
+```
+
+Set a password for `someguy` shell account:
+```bash
+sudo passwd someguy
 ```
 
 Add `someguy` shell account to the allowed SSH group (note that this group will differ if you modified the `sshd_allowed_group` variable):
@@ -104,8 +107,10 @@ Next, confirm `someguy` is able to successfully SSH in to the bastion host. If n
 Now that the bastion host is ready, there are several moving parts to be aware of.
 
 * `/etc/cron.d/ansible_auto-block-brutes` : Periodic job that blocks the IP address of anyone who tries to SSH in as root or as an unknown account. The block is cleared after the value in variable `firewall_blackhole_timeout` passes by.
-* `/etc/cron.d/ansible_security-updates` : Installs any security updates provided by Debian repositories.
-* `/var/log/ansible-playbook` : Log entries from Ansible playbook execution.
+* `/etc/cron.d/ansible_security-updates` : Periodic job that installs security updates provided by Debian repositories.
+* `/var/log/ansible-playbook` : Log file containing entries from Ansible playbook execution. [^playbook_log]
+
+[^playbook_log]: Note that the first time you run the playbook, the log file will be empty (i.e. because it will not have been configured yet). For every successive playbook execution it will contain Ansible log entries.
 
 The idea behind this repo is to help you quickly deploy a bastion host when you need a hardened SSH server to act as border security and/or for SSH port forwarding. In the world of rapid VM setup and teardown, the system may have a short useful lifetime.
 
