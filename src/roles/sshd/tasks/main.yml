@@ -1,0 +1,58 @@
+---
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Ensure the {{ sshd_allowed_group }} group exists
+    ansible.builtin.group:
+      name: "{{ sshd_allowed_group }}"
+      state: present
+
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Ensure local SSH config directory exists
+    ansible.builtin.file:
+      path: "{{ sshd_local_path }}"
+      state: directory
+      mode: 0755
+
+  - name: Create SSH banner
+    ansible.builtin.copy:
+      content: "{{ sshd_banner }}"
+      dest: "{{ sshd_local_path }}/banner"
+
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Check if SSH moduli has been secured
+    ansible.builtin.stat:
+      path: "{{ sshd_moduli }}.secure"
+    register: stat_t
+
+  - name: Ensure secure Diffie-Hellman moduli are used
+    ansible.builtin.shell: |
+      awk '$5 >= 3071' "{{ sshd_moduli }}" > "{{ sshd_moduli }}.secure"
+      if [ ${?} -ne 0 ] ; then exit 1 ; fi
+      cp -f "{{ sshd_moduli }}" "{{ sshd_moduli }}.orig"
+      if [ ${?} -ne 0 ] ; then exit 1 ; fi
+      cp -f "{{ sshd_moduli }}.secure" "{{ sshd_moduli }}"
+      if [ ${?} -ne 0 ] ; then exit 1 ; fi
+    notify:
+      - restart sshd
+    when: not stat_t.stat.exists
+
+  - name: Render SSH daemon config file
+    ansible.builtin.template:
+      src: "sshd_config.j2"
+      dest: "/etc/ssh/sshd_config"
+    notify:
+      - restart sshd
+
+  - name: Ensure SSH daemon is running and enabled
+    ansible.builtin.service:
+      name: ssh
+      state: started
+      enabled: yes

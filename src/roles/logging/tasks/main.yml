@@ -1,0 +1,35 @@
+---
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Ensure {{ playbook_log }} exists
+    ansible.builtin.file:
+      path: "{{ playbook_log }}"
+      state: touch
+      modification_time: preserve
+      access_time: preserve
+    notify:
+      - restart rsyslogd
+
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Render logrotate configuration
+    ansible.builtin.template:
+      src: "logrotate.j2"
+      dest: "/etc/logrotate.d/ansibleplay"
+
+  - name: Render rsyslog configuration
+    ansible.builtin.template:
+      src: "rsyslog.j2"
+      dest: "/etc/rsyslog.d/ansibleplay.conf"
+    notify:
+      - restart rsyslogd
+
+  - name: Ensure syslog daemon is running and enabled
+    ansible.builtin.service:
+      name: rsyslog
+      state: started
+      enabled: yes

@@ -1,0 +1,118 @@
+#!/bin/bash
+
+# Managed by Ansible
+
+set -u
+set -o pipefail
+
+# Call script with 'debug' arg to keep temp files for review.
+
+# -------------------------------------------------------------------------- #
+#                       VARIABLE DEFINITIONS
+# -------------------------------------------------------------------------- #
+
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+
+readonly _od="$(mktemp -d -p /tmp ${0##*/}.XXXXXX)"
+readonly _slog="${_od}/sshd-logs"
+readonly _invalids="${_od}/invalid-user-attempts"
+readonly _rootnoops="${_od}/root-user-attempts"
+readonly _miskexes="${_od}/mismatched-key-exchanges"
+readonly _ips="${_od}/ip-addresses"
+
+readonly _arg="${1:-x}"
+
+# -------------------------------------------------------------------------- #
+#                       FUNCTIONS
+# -------------------------------------------------------------------------- #
+
+errout() {
+        local _msg="${0##*/} error: ${1}"
+        printf '%s\n' "${_msg}" >&2
+        exit 1
+}
+
+cleanup() {
+        if [ "${_arg:-x}" == "debug" ] ; then
+                printf '%s\n' "Processed data in ${_od}"
+        else
+                rm -fr "${_od}"
+        fi
+}
+
+get_recent_sshd_logs() {
+        local _timeframe='1 hour ago'
+        local _rc
+
+        journalctl -u ssh -o cat -S "${_timeframe}" > "${_slog}"
+        _rc=${?}
+
+        if [ ${_rc} -eq 0 ] || [ ${_rc} -eq 1 ] ; then
+                return ${_rc}
+        else
+                errout 'Error while searching sshd logs'
+        fi
+}
+
+get_invalid_users() {
+        grep -E 'Invalid user' "${_slog}" > "${_invalids}"
+
+        if [ ${?} -gt 1 ] ; then
+                errout 'Error while checking for invalid users'
+        fi
+}
+
+get_root_fails() {
+        grep -E 'User root from .* not allowed' "${_slog}" > "${_rootnoops}"
+
+        if [ ${?} -gt 1 ] ; then
+                errout 'Error while checking for root fails'
+        fi
+}
+
+get_mismatched_kexes() {
+        local _reg
+        _reg='Unable to negotiate .* no matching key exchange method found'
+
+        grep -E "${_reg}" "${_slog}" > "${_miskexes}"
+
+        if [ ${?} -gt 1 ] ; then
+                errout 'Error while checking for mismatched key exchanges'
+        fi
+}
+
+get_ip_addresses() {
+        local _reg='\b([1-2]?[0-9]?[0-9]\.){3}[1-2]?[0-9]?[0-9]\b'
+
+        for _i in "${_invalids}" "${_rootnoops}" "${_miskexes}" ; do
+                grep -Eo "${_reg}" "${_i}" >> "${_ips}"
+
+                if [ ${?} -gt 1 ] ; then
+                        errout 'Error while capturing IPs'
+                fi
+        done
+}
+
+# --------------------------------------------------------------------------- #
+#                       CLEANUP AND SIGNAL HANDLING
+# --------------------------------------------------------------------------- #
+
+trap 'cleanup' EXIT
+trap 'exit 2' HUP INT QUIT TERM
+
+# -------------------------------------------------------------------------- #
+#                       MAIN LOGIC
+# -------------------------------------------------------------------------- #
+
+get_recent_sshd_logs
+
+if [ ${?} -eq 0 ] ; then
+        get_invalid_users
+        get_root_fails
+        get_mismatched_kexes
+        get_ip_addresses
+fi
+
+sort -u "${_ips}"
+
+exit 0

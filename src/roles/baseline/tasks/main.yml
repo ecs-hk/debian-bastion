@@ -1,0 +1,90 @@
+---
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Install baseline packages
+    ansible.builtin.apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - "aptitude"
+      - "cowsay"
+      - "git"
+      - "fortune"
+      - "jq"
+      - "nftables"
+      - "systemd-timesyncd"
+      - "tmux"
+      - "vim"
+
+  - name: Ensure time sync and cron daemons are running and enabled
+    ansible.builtin.service:
+      name: "{{ item }}"
+      state: started
+      enabled: yes
+    with_items:
+      - "systemd-timesyncd"
+      - "cron"
+
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Copy a very helpful profile script
+    ansible.builtin.copy:
+      src: "zz80-helpful-cow.sh"
+      dest: "/etc/profile.d/zz80-helpful-cow.sh"
+
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Make root slightly better with bashrc tuning
+    ansible.builtin.copy:
+      src: "bashrc"
+      dest: "/root/.bashrc"
+      backup: true
+
+  - name: Make root way cooler with shell history scrolling
+    ansible.builtin.copy:
+      src: "inputrc"
+      dest: "/root/.inputrc"
+
+  - name: Make root much awesomer with vim settings
+    ansible.builtin.copy:
+      src: "vimrc"
+      dest: "/root/.vimrc"
+
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Check if {{ apt_sec_sources }} exists
+    ansible.builtin.stat:
+      path: "{{ apt_sec_sources }}"
+    register: stat_t
+
+  - name: Create {{ apt_sec_sources }}
+    ansible.builtin.shell:
+      cmd: "grep 'security' {{ apt_sources }} > {{ apt_sec_sources }}"
+    when: not stat_t.stat.exists
+
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Render script to install security updates
+    ansible.builtin.template:
+      src: "install-sec-updates.j2"
+      dest: "/usr/local/sbin/install-sec-updates"
+      mode: 0500
+
+  - name: Create cronjob to run security updates script
+    ansible.builtin.cron:
+      name: "security-only updates installed by apt"
+      minute: "05"
+      hour: "06,18"
+      user: root
+      job: "/usr/local/sbin/install-sec-updates install"
+      cron_file: ansible_security-updates

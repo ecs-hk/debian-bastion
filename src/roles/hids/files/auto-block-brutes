@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Managed by Ansible
+
+set -u
+set -o pipefail
+
+# -------------------------------------------------------------------------- #
+#                       VARIABLE DEFINITIONS
+# -------------------------------------------------------------------------- #
+
+PATH=/usr/bin:/bin:/usr/local/sbin
+
+readonly _od="$(mktemp -d -p /tmp ${0##*/}.XXXXXX)"
+readonly _ips="${_od}/ip-addresses"
+
+# -------------------------------------------------------------------------- #
+#                       FUNCTIONS
+# -------------------------------------------------------------------------- #
+
+errout() {
+        local _msg="${0##*/} error: ${1}"
+
+        logger -p local3.err "${msg}"
+        printf '%s\n' "${_msg}" >&2
+
+        exit 1
+}
+
+cleanup() {
+        rm -fr "${_od}"
+}
+
+# --------------------------------------------------------------------------- #
+#                       CLEANUP AND SIGNAL HANDLING
+# --------------------------------------------------------------------------- #
+
+trap 'cleanup' EXIT
+trap 'exit 2' HUP INT QUIT TERM
+
+# -------------------------------------------------------------------------- #
+#                       MAIN LOGIC
+# -------------------------------------------------------------------------- #
+
+get-ssh-baddies > "${_ips}"
+[ ${?} -ne 0 ] && errout 'Problem running SSH baddies script'
+
+# If the file is empty, quietly get out.
+[ ! -s "${_ips}" ] && exit 0
+
+while IFS='' read -r _line || [ -n "${_line}" ] ; do
+        block-ip "${_line}"
+        [ ${?} -ne 0 ] && errout "Problem blocking IP ${_line}"
+done < "${_ips}"
+
+exit 0

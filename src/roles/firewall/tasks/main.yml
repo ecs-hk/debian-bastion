@@ -1,0 +1,45 @@
+---
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Ensure firewall configuration exists
+    ansible.builtin.file:
+      path: "{{ fw_config }}"
+      state: touch
+      mode: 0644
+      modification_time: preserve
+      access_time: preserve
+
+  - name: Check whether firewall already deployed
+    ansible.builtin.shell: grep 'set blackhole' "{{ fw_config }}"
+    register: ready_t
+    changed_when: false
+    failed_when: ready_t.rc > 1
+
+##############################################################################
+- block:
+##############################################################################
+
+  - name: Render firewall script
+    ansible.builtin.template:
+      src: "build-firewall.j2"
+      dest: "{{ fw_build_script }}"
+      mode: 0500
+    register: script_t
+
+  - name: Deploy firewall if needed
+    ansible.builtin.shell: |
+      "{{ fw_build_script }}"
+      if [ ${?} -ne 0 ] ; then exit 1 ; fi
+      /usr/sbin/nft list ruleset > "{{ fw_config }}"
+      if [ ${?} -ne 0 ] ; then exit 1 ; fi
+    notify:
+      - restart nftables
+    when: "('set blackhole' not in ready_t.stdout) or script_t.changed"
+
+  - name: Ensure firewall daemon is running and enabled
+    ansible.builtin.service:
+      name: nftables
+      state: started
+      enabled: yes

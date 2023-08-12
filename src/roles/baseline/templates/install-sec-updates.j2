@@ -1,0 +1,120 @@
+#!/bin/bash
+
+# Managed by Ansible
+
+# Install only security updates. Configuration file used by this script was
+# created using:
+#
+#  cd /etc/apt
+#  grep 'security' sources.list > security.sources.list
+
+# --------------------------------------------------------------------------- #
+#                       SHELL OPTIONS
+# --------------------------------------------------------------------------- #
+
+set -u
+set -o pipefail
+
+# --------------------------------------------------------------------------- #
+#                       VARIABLE DEFINITIONS
+# --------------------------------------------------------------------------- #
+
+PATH=/usr/bin:/bin
+
+readonly _arg="${1:-x}"
+readonly _apt_sources_file='{{ apt_sec_sources }}'
+readonly _output='/tmp/pkg-sec-check.txt'
+
+# --------------------------------------------------------------------------- #
+#                       FUNCTIONS
+# --------------------------------------------------------------------------- #
+
+errout() {
+        logger -p local3.err "${0##*/} error: ${1}"
+        exit 1
+}
+
+lognotice() {
+        logger -p local3.notice "${0##*/} notice: ${1}"
+}
+
+audit_cli_arg() {
+        [ "${_arg}" == "check" ] && return 0
+        [ "${_arg}" == "install" ] && return 0
+        printf '%s\n' "usage: ${0##*/} check|install"
+}
+
+audit_apt_sources() {
+        if [ ! -e "${_apt_sources_file}" ] ; then
+                errout "${_apt_sources_file} needs to be created"
+        fi
+}
+
+check_for_security_updates() {
+        apt-get                                                         \
+        update                                                          \
+        -o "Dir::Etc::SourceList=${_apt_sources_file}"                  \
+        >>"${_output}" 2>&1
+
+        apt-get                                                         \
+        upgrade                                                         \
+        --assume-no                                                     \
+        -o "Dir::Etc::SourceList=${_apt_sources_file}"                  \
+        >>"${_output}" 2>&1
+
+        local _rc=${?}
+
+        if [ ${_rc} -eq 0 ] ; then
+                return ${_rc}
+        elif [ ${_rc} -eq 1 ] ; then
+                lognotice 'apt-get(8) security updates AVAILABLE'
+                return 100
+        else
+                errout "apt-get(8) check failed (see ${_output})"
+        fi
+}
+
+print_security_updates_detail() {
+        cat "${_output}"
+}
+
+install_security_updates() {
+        apt-get                                                         \
+        upgrade                                                         \
+        -y                                                              \
+        -o "Dir::Etc::SourceList=${_apt_sources_file}"                  \
+        >>"${_output}" 2>&1
+
+        local _rc=${?}
+
+        if [ ${_rc} -eq 0 ] ; then
+                lognotice 'apt-get(8) security updates installed'
+        else
+                errout "apt-get(8) update failed (see ${_output})"
+        fi
+}
+
+# --------------------------------------------------------------------------- #
+#                       CLEANUP AND SIGNAL HANDLING
+# --------------------------------------------------------------------------- #
+
+trap 'exit 2' HUP INT QUIT TERM
+
+# --------------------------------------------------------------------------- #
+#                       MAIN LOGIC
+# --------------------------------------------------------------------------- #
+
+cp /dev/null "${_output}"
+
+audit_cli_arg "${_arg}"
+audit_apt_sources
+check_for_security_updates
+_rc=${?}
+
+if [ "${_arg}" == "check" ] ; then
+        print_security_updates_detail
+elif [ "${_arg}" == "install" ] && [ ${_rc} -eq 100 ] ; then
+        install_security_updates
+fi
+
+exit 0
