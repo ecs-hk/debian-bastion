@@ -75,12 +75,10 @@ Run the playbook helper script as root, or as an account that is a full sudoer:
 
 ### Configure authentication for shell account
 
-The ssh daemon for the bastion host requires *both* pubkey authentication and password authentication for a successful login.
-
-Set a password for `someguy` shell account:
-```bash
-sudo passwd someguy
-```
+The ssh daemon for the bastion host requires *all of the following* in order to log in:
+* successful pubkey authentication
+* successful password authentication
+* membership in the allowed SSH group
 
 Install SSH public key for `someguy` shell account (and ensure correct permissions):
 ```bash
@@ -88,6 +86,11 @@ sudo cp someguy.pub /usr/local/etc/ssh/authorized_keys.someguy
 ```
 ```bash
 sudo chmod 644 /usr/local/etc/ssh/authorized_keys.someguy
+```
+
+Set a password for `someguy` shell account:
+```bash
+sudo passwd someguy
 ```
 
 Add `someguy` shell account to the allowed SSH group (note that this group will differ if you modified the `sshd_allowed_group` variable):
