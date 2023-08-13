@@ -13,6 +13,8 @@ PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly _arg="${1:-x}"
 
+readonly _filter_set='blackhole'
+
 # --------------------------------------------------------------------------- #
 #                       FUNCTIONS
 # --------------------------------------------------------------------------- #
@@ -42,27 +44,21 @@ audit_input_arg() {
         fi
 }
 
-log_info() {
-        local _msg="${0##*/} info: ${1}"
-        printf '%s\n' "${_msg}"
-        logger -p local3.info "${_msg}"
-}
-
 confirm_needs_processing() {
         local _regex="val.*\"${_ip_regex}\""
         local _rc
 
-        nft --json list set inet filter blackhole |
+        nft --json list set inet filter ${_filter_set} |
         jq . |
         grep -E "${_regex}" \
         > /dev/null
         _rc=${?}
 
         if [ ${_rc} -eq 0 ] ; then
-                printf '%s\n' 'IP already being blocked'
+                printf '%s\n' 'IP already blocked'
                 return ${_rc}
         elif [ ${_rc} -eq 1 ] ; then
-                printf '%s\n' 'OK, let us block this'
+                printf '%s\n' 'OK, will block IP..'
                 return ${_rc}
         else
                 errout 'Problem quering firewall rules'
@@ -70,7 +66,7 @@ confirm_needs_processing() {
 }
 
 add_drop_rule() {
-        nft add element inet filter blackhole "{ ${_ip} }"
+        nft add element inet filter ${_filter_set} "{ ${_ip} }"
 
         if [ ${?} -ne 0 ] ; then
                 errout 'Problem adding rule'
@@ -90,7 +86,7 @@ confirm_needs_processing
 if [ ${?} -eq 1 ] ; then
         readonly _ip="${_arg}"
         add_drop_rule
-        log_info "IP ${_ip} filtered"
+        printf '%s\n' "IP ${_ip} added to ${_filter_set}"
 fi
 
 exit 0

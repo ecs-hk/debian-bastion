@@ -20,6 +20,8 @@ readonly _rootnoops="${_od}/root-user-attempts"
 readonly _miskexes="${_od}/mismatched-key-exchanges"
 readonly _ips="${_od}/ip-addresses"
 
+readonly _timeframe='20 minutes ago'
+
 readonly _arg="${1:-x}"
 
 # -------------------------------------------------------------------------- #
@@ -41,15 +43,12 @@ cleanup() {
 }
 
 get_recent_sshd_logs() {
-        local _timeframe='1 hour ago'
         local _rc
 
         journalctl -u ssh -o cat -S "${_timeframe}" > "${_slog}"
         _rc=${?}
 
-        if [ ${_rc} -eq 0 ] || [ ${_rc} -eq 1 ] ; then
-                return ${_rc}
-        else
+        if [ ${?} -ne 0 ] ; then
                 errout 'Error while searching sshd logs'
         fi
 }
@@ -106,13 +105,12 @@ trap 'exit 2' HUP INT QUIT TERM
 
 get_recent_sshd_logs
 
-if [ ${?} -eq 0 ] ; then
+if [ -s "${_slog}" ] ; then
         get_invalid_users
         get_root_fails
         get_mismatched_kexes
         get_ip_addresses
+        sort -u "${_ips}"
 fi
-
-sort -u "${_ips}"
 
 exit 0

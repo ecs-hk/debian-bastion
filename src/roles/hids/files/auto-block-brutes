@@ -27,6 +27,15 @@ errout() {
         exit 1
 }
 
+log_info() {
+        local _msg="${0##*/} info: ${1}"
+
+        logger -p local3.info "${msg}"
+        printf '%s\n' "${_msg}"
+
+        exit 1
+}
+
 cleanup() {
         rm -fr "${_od}"
 }
@@ -49,6 +58,7 @@ get-ssh-baddies > "${_ips}"
 [ ! -s "${_ips}" ] && exit 0
 
 while IFS='' read -r _line || [ -n "${_line}" ] ; do
+        log_info "Baddie detected, blocking IP: ${_line}"
         block-ip "${_line}"
         [ ${?} -ne 0 ] && errout "Problem blocking IP ${_line}"
 done < "${_ips}"
