@@ -21,7 +21,7 @@ readonly _ips="${_od}/ip-addresses"
 errout() {
         local _msg="${0##*/} error: ${1}"
 
-        logger -p local3.err "${msg}"
+        logger -p local3.err "${_msg}"
         printf '%s\n' "${_msg}" >&2
 
         exit 1
@@ -30,7 +30,7 @@ errout() {
 log_info() {
         local _msg="${0##*/} info: ${1}"
 
-        logger -p local3.info "${msg}"
+        logger -p local3.info "${_msg}"
         printf '%s\n' "${_msg}"
 
         exit 1
