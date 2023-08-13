@@ -12,6 +12,9 @@ set -o pipefail
 PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly _arg="${1:-x}"
+readonly _print_to="${2:-x}"
+
+readonly _filter_set='blackhole'
 
 # --------------------------------------------------------------------------- #
 #                       FUNCTIONS
@@ -23,12 +26,26 @@ errout() {
         exit 1
 }
 
+print_usage_and_exit() {
+        printf '%s\n' "Usage: ${0} ip_address" >&2
+        exit 1
+}
+
+say() {
+        local _msg="${0##*/} info: ${1}"
+
+        if [ "${_print_to}" == "logonly" ] ; then
+                logger -p local3.info "${_msg}"
+        else
+                printf '%s\n' "${_msg}"
+        fi
+}
+
 audit_input_arg() {
         local _reg='^([1-2]?[0-9]?[0-9]\.){3}[1-2]?[0-9]?[0-9]$'
 
         if [ "${_arg:-x}" == "x" ] ; then
-                printf '%s\n' "Usage: ${0} ip_address" >&2
-                exit 1
+                print_usage_and_exit
         fi
 
         if [ "${_arg}" == "0.0.0.0" ] ; then
@@ -42,27 +59,20 @@ audit_input_arg() {
         fi
 }
 
-log_info() {
-        local _msg="${0##*/} info: ${1}"
-        printf '%s\n' "${_msg}"
-        logger -p local3.info "${_msg}"
-}
-
 confirm_needs_processing() {
         local _regex="val.*\"${_ip_regex}\""
         local _rc
 
-        nft --json list set inet filter blackhole |
+        nft --json list set inet filter ${_filter_set} |
         jq . |
         grep -E "${_regex}" \
         > /dev/null
         _rc=${?}
 
         if [ ${_rc} -eq 0 ] ; then
-                printf '%s\n' 'IP already being blocked'
+                say 'IP already blocked'
                 return ${_rc}
         elif [ ${_rc} -eq 1 ] ; then
-                printf '%s\n' 'OK, let us block this'
                 return ${_rc}
         else
                 errout 'Problem quering firewall rules'
@@ -70,10 +80,10 @@ confirm_needs_processing() {
 }
 
 add_drop_rule() {
-        nft add element inet filter blackhole "{ ${_ip} }"
+        nft add element inet filter ${_filter_set} "{ ${_ip} }"
 
         if [ ${?} -ne 0 ] ; then
-                errout 'Problem adding rule'
+                errout 'Problem adding firewall rule'
         fi
 }
 
@@ -90,7 +100,7 @@ confirm_needs_processing
 if [ ${?} -eq 1 ] ; then
         readonly _ip="${_arg}"
         add_drop_rule
-        log_info "IP ${_ip} filtered"
+        say "IP ${_ip} added to ${_filter_set}"
 fi
 
 exit 0

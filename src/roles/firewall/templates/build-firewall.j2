@@ -5,6 +5,7 @@
 # Display rules:     nft list ruleset
 # Save rules:        nft list ruleset > /etc/nftables.conf
 # Add to blackhole:  nft add element inet filter blackhole { 10.1.1.4 }
+# Rm from blackhole: nft delete element inet filter blackhole { 10.1.1.4 }
 # List blackhole:    nft list set inet filter blackhole
 
 set -u

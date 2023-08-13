@@ -21,10 +21,16 @@ readonly _ips="${_od}/ip-addresses"
 errout() {
         local _msg="${0##*/} error: ${1}"
 
-        logger -p local3.err "${msg}"
+        logger -p local3.err "${_msg}"
         printf '%s\n' "${_msg}" >&2
 
         exit 1
+}
+
+log_info() {
+        local _msg="${0##*/} info: ${1}"
+        logger -p local3.info "${_msg}"
+        printf '%s\n' "${_msg}"
 }
 
 cleanup() {
@@ -49,7 +55,8 @@ get-ssh-baddies > "${_ips}"
 [ ! -s "${_ips}" ] && exit 0
 
 while IFS='' read -r _line || [ -n "${_line}" ] ; do
-        block-ip "${_line}"
+        log_info "Baddie detected, IP ${_line}"
+        block-ip "${_line}" 'logonly'
         [ ${?} -ne 0 ] && errout "Problem blocking IP ${_line}"
 done < "${_ips}"
 
