@@ -56,7 +56,7 @@ get-ssh-baddies > "${_ips}"
 
 while IFS='' read -r _line || [ -n "${_line}" ] ; do
         log_info "Baddie detected, IP ${_line}"
-        block-ip "${_line}"
+        block-ip "${_line}" 'logonly'
         [ ${?} -ne 0 ] && errout "Problem blocking IP ${_line}"
 done < "${_ips}"
 
