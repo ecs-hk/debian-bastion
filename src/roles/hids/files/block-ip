@@ -61,6 +61,7 @@ audit_input_arg() {
 }
 
 check_if_ip_already_blocked() {
+        # An exit code of 0 means it is already in the block set
         nft get element inet filter ${_filter_set} "{ ${_ip} }" \
         > /dev/null 2>&1
         return ${?}
@@ -85,7 +86,7 @@ add_ip_to_block_set() {
 audit_input_arg
 check_if_ip_already_blocked
 
-if [ ${?} -eq 0 ] ; then
+if [ ${?} -gt 0 ] ; then
         say "Blocking baddie IP ${_ip}"
         add_ip_to_block_set
 fi
