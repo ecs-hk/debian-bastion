@@ -65,7 +65,7 @@ add_chains() {
 
 add_blackhole_set() {
         local _c='nft add set inet filter blackhole'
-        ${_c} "{ type ipv4_addr; timeout ${_fbt}; }"
+        ${_c} "{ type ipv4_addr; timeout ${_fbt}; size 65536; }"
 	[ ${?} -eq 0 ] || return 1
 }
 
