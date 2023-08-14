@@ -11,7 +11,7 @@ set -o pipefail
 
 PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
-readonly _arg="${1:-x}"
+readonly _ip="${1:-x}"
 readonly _print_to="${2:-x}"
 
 readonly _filter_set='blackhole'
@@ -22,12 +22,13 @@ readonly _filter_set='blackhole'
 
 errout() {
         local _msg="${0##*/} error: ${1}"
-        printf '%s\n' "${_msg}" >&2
-        exit 1
-}
 
-print_usage_and_exit() {
-        printf '%s\n' "Usage: ${0} ip_address" >&2
+        if [ "${_print_to}" == "logonly" ] ; then
+                logger -p local3.err "${_msg}"
+        else
+                printf '%s\n' "${_msg}" >&2
+        fi
+
         exit 1
 }
 
@@ -35,7 +36,7 @@ say() {
         local _msg="${0##*/} info: ${1}"
 
         if [ "${_print_to}" == "logonly" ] ; then
-                logger -p local3.info "${_msg}"
+                :
         else
                 printf '%s\n' "${_msg}"
         fi
@@ -44,46 +45,36 @@ say() {
 audit_input_arg() {
         local _reg='^([1-2]?[0-9]?[0-9]\.){3}[1-2]?[0-9]?[0-9]$'
 
-        if [ "${_arg:-x}" == "x" ] ; then
-                print_usage_and_exit
+        if [ "${_ip}" == "x" ] ; then
+                errout 'Give me an IP address to block'
         fi
 
-        if [ "${_arg}" == "0.0.0.0" ] ; then
+        if [ "${_ip}" == "0.0.0.0" ] ; then
                 errout 'No way, 0.0.0.0 is too broad'
         fi
 
-        if grep -Eq "${_reg}" <<<"${_arg}" ; then
+        if grep -Eq "${_reg}" <<<"${_ip}" ; then
                 :
         else
-                errout 'That does not look like an IP address'
+                errout "${_ip} does not look like an IP address"
         fi
 }
 
-confirm_needs_processing() {
-        local _regex="val.*\"${_ip_regex}\""
-        local _rc
-
-        nft --json list set inet filter ${_filter_set} |
-        jq . |
-        grep -E "${_regex}" \
-        > /dev/null
-        _rc=${?}
-
-        if [ ${_rc} -eq 0 ] ; then
-                say 'IP already blocked'
-                return ${_rc}
-        elif [ ${_rc} -eq 1 ] ; then
-                return ${_rc}
-        else
-                errout 'Problem quering firewall rules'
-        fi
+check_if_ip_already_blocked() {
+        nft get element inet filter ${_filter_set} "{ ${_ip} }" \
+        > /dev/null 2>&1
+        return ${?}
 }
 
-add_drop_rule() {
+add_ip_to_block_set() {
+        # Side note: adding a rule for an IP that is already
+        # in the set is not harmful. Even if added twice, it
+        # will only appear once in the set, and it will not
+        # restart the timeout for the IP.
         nft add element inet filter ${_filter_set} "{ ${_ip} }"
 
         if [ ${?} -ne 0 ] ; then
-                errout 'Problem adding firewall rule'
+                errout "Problem adding rule to block ${_ip}"
         fi
 }
 
@@ -92,15 +83,11 @@ add_drop_rule() {
 # --------------------------------------------------------------------------- #
 
 audit_input_arg
+check_if_ip_already_blocked
 
-# Confirm the IP is not already being blocked
-readonly _ip_regex="${_arg//./\\.}"
-confirm_needs_processing
-
-if [ ${?} -eq 1 ] ; then
-        readonly _ip="${_arg}"
-        add_drop_rule
-        say "IP ${_ip} added to ${_filter_set}"
+if [ ${?} -eq 0 ] ; then
+        say "Blocking baddie IP ${_ip}"
+        add_ip_to_block_set
 fi
 
 exit 0

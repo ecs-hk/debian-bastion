@@ -22,7 +22,8 @@ readonly _ips="${_od}/ip-addresses"
 
 readonly _timeframe='20 minutes ago'
 
-readonly _arg="${1:-x}"
+readonly _debug="${1:-x}"
+readonly _print_to="${2:-x}"
 
 # -------------------------------------------------------------------------- #
 #                       FUNCTIONS
@@ -30,12 +31,18 @@ readonly _arg="${1:-x}"
 
 errout() {
         local _msg="${0##*/} error: ${1}"
-        printf '%s\n' "${_msg}" >&2
+
+        if [ "${_print_to}" == "logonly" ] ; then
+                logger -p local3.err "${_msg}"
+        else
+                printf '%s\n' "${_msg}" >&2
+        fi
+
         exit 1
 }
 
 cleanup() {
-        if [ "${_arg:-x}" == "debug" ] ; then
+        if [ "${_debug}" == "debug" ] ; then
                 printf '%s\n' "Processed data in ${_od}"
         else
                 rm -fr "${_od}"

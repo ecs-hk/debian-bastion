@@ -2,6 +2,10 @@
 
 # Managed by Ansible
 
+# Call this script with the 'logonly' arg in order to write output
+# and errors to rsyslog. If not called with this arg, output and
+# errors will go to stdout / stderr.
+
 set -u
 set -o pipefail
 
@@ -14,6 +18,8 @@ PATH=/usr/bin:/bin:/usr/local/sbin
 readonly _od="$(mktemp -d -p /tmp ${0##*/}.XXXXXX)"
 readonly _ips="${_od}/ip-addresses"
 
+readonly _print_to="${1:-x}"
+
 # -------------------------------------------------------------------------- #
 #                       FUNCTIONS
 # -------------------------------------------------------------------------- #
@@ -21,16 +27,23 @@ readonly _ips="${_od}/ip-addresses"
 errout() {
         local _msg="${0##*/} error: ${1}"
 
-        logger -p local3.err "${_msg}"
-        printf '%s\n' "${_msg}" >&2
+        if [ "${_print_to}" == "logonly" ] ; then
+                logger -p local3.err "${_msg}"
+        else
+                printf '%s\n' "${_msg}" >&2
+        fi
 
         exit 1
 }
 
-log_info() {
+say() {
         local _msg="${0##*/} info: ${1}"
-        logger -p local3.info "${_msg}"
-        printf '%s\n' "${_msg}"
+
+        if [ "${_print_to}" == "logonly" ] ; then
+                :
+        else
+                printf '%s\n' "${_msg}"
+        fi
 }
 
 cleanup() {
@@ -48,15 +61,15 @@ trap 'exit 2' HUP INT QUIT TERM
 #                       MAIN LOGIC
 # -------------------------------------------------------------------------- #
 
-get-ssh-baddies > "${_ips}"
+get-ssh-baddies 'n' "${_print_to}" > "${_ips}"
 [ ${?} -ne 0 ] && errout 'Problem running SSH baddies script'
 
 # If the file is empty, quietly get out.
 [ ! -s "${_ips}" ] && exit 0
 
 while IFS='' read -r _line || [ -n "${_line}" ] ; do
-        log_info "Baddie detected, IP ${_line}"
-        block-ip "${_line}" 'logonly'
+        say "Baddie detected, IP ${_line}"
+        block-ip "${_line}" "${_print_to}"
         [ ${?} -ne 0 ] && errout "Problem blocking IP ${_line}"
 done < "${_ips}"
 
