@@ -26,7 +26,7 @@ readonly _block_set='blackhole'
 errout() {
         local _msg="${0##*/} error: ${1}"
 
-        if [ "${_logonly}" == "true" ] ; then
+        if [ "${_logonly:-x}" == "true" ] ; then
                 logger -p local3.err "${_msg}"
         else
                 printf '%s\n' "${_msg}" >&2
@@ -38,7 +38,7 @@ errout() {
 say() {
         local _msg="${0##*/} info: ${1}"
 
-        if [ "${_logonly}" == "true" ] ; then
+        if [ "${_logonly:-x}" == "true" ] ; then
                 logger -p local3.info "${_msg}"
         else
                 printf '%s\n' "${_msg}"
