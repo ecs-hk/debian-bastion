@@ -49,7 +49,7 @@ get-ssh-baddies -l > "${_baddie_ips}"
 [ ! -s "${_baddie_ips}" ] && exit 0
 
 while IFS='' read -r _ip || [ -n "${_ip}" ] ; do
-        block-ip -l "${_ip}"
+        block-ip -l -i "${_ip}"
         [ ${?} -ne 0 ] && errout "Problem blocking IP ${_ip}"
 done < "${_baddie_ips}"
 
