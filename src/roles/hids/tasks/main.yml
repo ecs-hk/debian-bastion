@@ -22,5 +22,5 @@
       name: "temporarily block IPs for brute force SSH creeps"
       minute: "*/05"
       user: root
-      job: "/usr/local/sbin/auto-block-brutes >/dev/null"
+      job: "/usr/local/sbin/auto-block-brutes"
       cron_file: ansible_auto-block-brutes
