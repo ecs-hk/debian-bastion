@@ -51,10 +51,7 @@ cleanup() {
 }
 
 get_recent_sshd_logs() {
-        local _rc
-
         journalctl -u ssh -o cat -S "${_timeframe}" > "${_slog}"
-        _rc=${?}
 
         if [ ${?} -ne 0 ] ; then
                 errout 'Problem searching sshd logs'
