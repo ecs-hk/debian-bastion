@@ -2,6 +2,10 @@
 
 # Managed by Ansible
 
+# This script can be run interactively or called by an automated
+# process (e.g. via cron). In the latter case, use the -l option
+# so that stdout / stderr goes to rsyslog.
+
 set -u
 set -o pipefail
 
@@ -12,9 +16,8 @@ set -o pipefail
 PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly _ip="${1:-x}"
-readonly _print_to="${2:-x}"
 
-readonly _filter_set='blackhole'
+readonly _block_set='blackhole'
 
 # --------------------------------------------------------------------------- #
 #                       FUNCTIONS
@@ -23,7 +26,7 @@ readonly _filter_set='blackhole'
 errout() {
         local _msg="${0##*/} error: ${1}"
 
-        if [ "${_print_to}" == "logonly" ] ; then
+        if [ "${_logonly}" == "true" ] ; then
                 logger -p local3.err "${_msg}"
         else
                 printf '%s\n' "${_msg}" >&2
@@ -35,14 +38,14 @@ errout() {
 say() {
         local _msg="${0##*/} info: ${1}"
 
-        if [ "${_print_to}" == "logonly" ] ; then
-                :
+        if [ "${_logonly}" == "true" ] ; then
+                logger -p local3.info "${_msg}"
         else
                 printf '%s\n' "${_msg}"
         fi
 }
 
-audit_input_arg() {
+audit_ip_arg() {
         local _reg='^([1-2]?[0-9]?[0-9]\.){3}[1-2]?[0-9]?[0-9]$'
 
         if [ "${_ip}" == "x" ] ; then
@@ -62,7 +65,7 @@ audit_input_arg() {
 
 check_if_ip_already_blocked() {
         # An exit code of 0 means it is already in the block set
-        nft get element inet filter ${_filter_set} "{ ${_ip} }" \
+        nft get element inet filter ${_block_set} "{ ${_ip} }" \
         > /dev/null 2>&1
         return ${?}
 }
@@ -72,10 +75,10 @@ add_ip_to_block_set() {
         # in the set is not harmful. Even if added twice, it
         # will only appear once in the set, and it will not
         # restart the timeout for the IP.
-        nft add element inet filter ${_filter_set} "{ ${_ip} }"
+        nft add element inet filter ${_block_set} "{ ${_ip} }"
 
         if [ ${?} -ne 0 ] ; then
-                errout "Problem adding rule to block ${_ip}"
+                errout "Problem adding ${_ip} to ${_block_set}"
         fi
 }
 
@@ -83,11 +86,19 @@ add_ip_to_block_set() {
 #                       MAIN LOGIC
 # --------------------------------------------------------------------------- #
 
-audit_input_arg
+while [ "${#}" -gt 0 ]; do
+        case "${1}" in
+                -l|--logonly) readonly _logonly='true'
+                        ;;
+        esac
+        shift
+done
+
+audit_ip_arg
 check_if_ip_already_blocked
 
 if [ ${?} -gt 0 ] ; then
-        say "Blocking baddie IP ${_ip}"
+        say "Adding IP ${_ip} to ${_block_set}"
         add_ip_to_block_set
 fi
 
