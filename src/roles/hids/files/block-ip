@@ -15,8 +15,6 @@ set -o pipefail
 
 PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
-readonly _ip="${1:-x}"
-
 readonly _block_set='blackhole'
 
 # --------------------------------------------------------------------------- #
@@ -48,7 +46,7 @@ say() {
 audit_ip_arg() {
         local _reg='^([1-2]?[0-9]?[0-9]\.){3}[1-2]?[0-9]?[0-9]$'
 
-        if [ "${_ip}" == "x" ] ; then
+        if [ "${_ip:-x}" == "x" ] ; then
                 errout 'Give me an IP address to block'
         fi
 
@@ -88,6 +86,8 @@ add_ip_to_block_set() {
 
 while [ "${#}" -gt 0 ]; do
         case "${1}" in
+                -i|--ip) readonly _ip="${2}" ; shift
+                        ;;
                 -l|--logonly) readonly _logonly='true'
                         ;;
         esac
