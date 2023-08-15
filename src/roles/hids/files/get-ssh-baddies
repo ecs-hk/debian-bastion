@@ -4,7 +4,7 @@
 
 # This script can be run interactively or called by an automated
 # process (e.g. via cron). In the latter case, use the -l option
-# so that stdout / stderr goes to rsyslog.
+# so that stderr goes to rsyslog.
 #
 # When debugging, use the -d option to view temporary files.
 
