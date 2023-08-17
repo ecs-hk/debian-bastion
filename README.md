@@ -121,9 +121,7 @@ Now that the bastion host is ready, there are several moving parts to be aware o
 [^playbook_log]:
     Note that the first time you run the playbook, the log file will be empty (i.e. because it will not have been configured yet). For every successive playbook execution it will contain Ansible log entries.
 
-The idea behind this repo is to help you quickly deploy a bastion host when you need a hardened SSH server to act as border security and/or for SSH port forwarding. In the world of rapid VM setup and teardown, the system may have a short useful lifetime.
-
-However, if you intend to maintain the bastion host for an extended period of time, it may be a good idea to run this repo's Ansible playbook on some periodic schedule, e.g. in an example `/etc/cron.d/run-playbook`:
+If you intend to maintain the bastion host for an extended period of time, it may be a good idea to run this repo's Ansible playbook on some periodic schedule, e.g. in an example `/etc/cron.d/run-playbook`:
 
 ```
 # Run bastion host playbook to ensure valid service configuration
