@@ -15,15 +15,15 @@ After provisioning a new system, the following one-time steps are needed.
 sudo apt update && sudo apt upgrade
 ```
 
-### Install Python venv requirements
+### Install git and Python requirements
 
 ```bash
-sudo apt install python3-pip python3-venv
+sudo apt install git python3-pip python3-venv
 ```
 
 ### Prepare venv and install Ansible
 
-Clone this repo, then run the prep script, which:
+Clone this repo, then cwd to it and run the prep script, which:
 1. sets up a venv
 2. installs Ansible within that venv
 
@@ -108,12 +108,18 @@ Now that the bastion host is ready, there are several moving parts to be aware o
 
 | File                                     | Description                   |
 | ---------------------------------------- | ------------------------------|
-| `/etc/cron.d/ansible_auto-block-brutes`  | Periodic job that blocks the IP address of anyone who tries to SSH in as root or as an unknown account. The block is cleared after the value in variable `firewall_blackhole_timeout` passes by. |
+| `/etc/cron.d/ansible_auto-block-brutes`  | Periodic job that blocks the IP address of anyone who tries to SSH in as root or as an unknown account. [^block_baddies] The block is cleared after the value in variable `firewall_blackhole_timeout` passes by. |
 | `/etc/cron.d/ansible_security-updates`   | Periodic job that installs security updates provided by Debian repositories. |
 | `/var/log/ansible-playbook`              | Log file containing entries from Ansible playbook execution. [^playbook_log] |
 | `/var/log/bastion-chatter`               | Log file containing entries from custom script chatter, including that from periodic jobs. |
 
-[^playbook_log]: Note that the first time you run the playbook, the log file will be empty (i.e. because it will not have been configured yet). For every successive playbook execution it will contain Ansible log entries.
+[^block_baddies]:
+    The reasoning behind this IP blocking logic is:
+    * Anyone who tries to SSH in as root is likely a bad actor
+    * Anyone who tries to SSH in as an unknown account is likely a bad actor (i.e. conducting a brute force attempt with many different account names)
+
+[^playbook_log]:
+    Note that the first time you run the playbook, the log file will be empty (i.e. because it will not have been configured yet). For every successive playbook execution it will contain Ansible log entries.
 
 The idea behind this repo is to help you quickly deploy a bastion host when you need a hardened SSH server to act as border security and/or for SSH port forwarding. In the world of rapid VM setup and teardown, the system may have a short useful lifetime.
 
