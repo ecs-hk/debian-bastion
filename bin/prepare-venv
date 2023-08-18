@@ -59,7 +59,7 @@ install_pip_packages() {
         cp /dev/null "${_output}"
 
         # Prepare pip
-        pip3 install --upgrade pip >> "${_output}" 2>&1
+        pip3 install --no-cache-dir --upgrade pip >> "${_output}" 2>&1
         [ ${?} -ne 0 ] && errout 'Problem upgrading pip'
 
         # Install Ansible packages
