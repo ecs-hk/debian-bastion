@@ -8,9 +8,7 @@
       name: "{{ item }}"
       state: present
     with_items:
-      - "aptitude"
       - "cowsay"
-      - "git"
       - "fortune"
       - "jq"
       - "nftables"
