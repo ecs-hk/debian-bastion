@@ -59,15 +59,10 @@
 - block:
 ##############################################################################
 
-  - name: Check if {{ apt_sec_sources }} exists
-    ansible.builtin.stat:
-      path: "{{ apt_sec_sources }}"
-    register: stat_t
-
-  - name: Create {{ apt_sec_sources }}
-    ansible.builtin.shell:
-      cmd: "grep 'security' {{ apt_sources }} > {{ apt_sec_sources }}"
-    when: not stat_t.stat.exists
+  - name: Render {{ apt_sec_sources }}
+    ansible.builtin.template:
+      src: "apt-security-sources.j2"
+      dest: "{{ apt_sec_sources }}"
 
 ##############################################################################
 - block:
