@@ -2,7 +2,7 @@
 
 Helper scripts and Ansible for quick setup of a bastion server.
 
-* Designed to work with **Debian 11**
+* Designed to work with **Debian 12**
 * Playbook self-configures the system it is run on
 
 ## Pre-flight setup
