@@ -15,6 +15,11 @@ After provisioning a new system, the following one-time steps are needed.
 sudo apt update && sudo apt upgrade
 ```
 
+Following the package updates, a reboot is required to ensure nftables gets along with the playbook:
+```bash
+sudo systemctl reboot
+```
+
 ### Install git and Python requirements
 
 ```bash
