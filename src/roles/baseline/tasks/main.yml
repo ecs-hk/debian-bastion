@@ -13,6 +13,7 @@
       - "fortune"
       - "jq"
       - "nftables"
+      - "rsyslog"
       - "systemd-timesyncd"
       - "tmux"
       - "vim"
