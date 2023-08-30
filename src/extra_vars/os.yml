@@ -1,3 +1,4 @@
 ---
 lin_os: "Debian"
-lin_version: "11"
+lin_version: "12"
+lin_release: "bookworm"

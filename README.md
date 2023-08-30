@@ -2,7 +2,7 @@
 
 Helper scripts and Ansible for quick setup of a bastion server.
 
-* Designed to work with **Debian 11**
+* Designed to work with **Debian 12**
 * Playbook self-configures the system it is run on
 
 ## Pre-flight setup
@@ -13,6 +13,11 @@ After provisioning a new system, the following one-time steps are needed.
 
 ```bash
 sudo apt update && sudo apt upgrade
+```
+
+Following the package updates, a reboot is required to ensure nftables gets along with the playbook:
+```bash
+sudo systemctl reboot
 ```
 
 ### Install git and Python requirements

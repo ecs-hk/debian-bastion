@@ -25,7 +25,7 @@ AllowGroups {{ sshd_allowed_group }}
 
 AuthenticationMethods publickey,keyboard-interactive:pam
 UsePAM yes
-ChallengeResponseAuthentication yes
+KbdInteractiveAuthentication yes
 PubkeyAuthentication yes
 AuthorizedKeysFile {{ sshd_local_path }}/authorized_keys.%u
 
