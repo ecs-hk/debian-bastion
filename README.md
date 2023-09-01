@@ -12,7 +12,7 @@ After provisioning a new system, the following one-time steps are needed.
 ### Update Debian packages
 
 ```bash
-sudo apt update && sudo apt upgrade
+sudo apt update && sudo apt -y upgrade
 ```
 
 Following the package updates, a reboot is required to ensure nftables gets along with the playbook:
@@ -23,7 +23,7 @@ sudo systemctl reboot
 ### Install git and Python requirements
 
 ```bash
-sudo apt install git python3-pip python3-venv
+sudo apt -y install git python3-pip python3-venv
 ```
 
 ### Prepare venv and install Ansible

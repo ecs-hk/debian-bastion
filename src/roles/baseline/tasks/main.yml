@@ -18,14 +18,17 @@
       - "tmux"
       - "vim"
 
-  - name: Ensure time sync and cron daemons are running and enabled
+  - name: Ensure important services are running and enabled
     ansible.builtin.service:
       name: "{{ item }}"
       state: started
       enabled: yes
     with_items:
-      - "systemd-timesyncd"
       - "cron"
+      - "nftables"
+      - "rsyslog"
+      - "ssh"
+      - "systemd-timesyncd"
 
 ##############################################################################
 - block:

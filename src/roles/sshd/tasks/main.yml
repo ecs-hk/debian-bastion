@@ -51,9 +51,3 @@
       backup: true
     notify:
       - restart sshd
-
-  - name: Ensure SSH daemon is running and enabled
-    ansible.builtin.service:
-      name: ssh
-      state: started
-      enabled: yes

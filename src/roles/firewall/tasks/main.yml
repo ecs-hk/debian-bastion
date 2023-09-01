@@ -37,9 +37,3 @@
     notify:
       - restart nftables
     when: "('set blackhole' not in ready_t.stdout) or script_t.changed"
-
-  - name: Ensure firewall daemon is running and enabled
-    ansible.builtin.service:
-      name: nftables
-      state: started
-      enabled: yes
