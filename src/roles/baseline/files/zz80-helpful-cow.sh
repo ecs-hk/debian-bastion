@@ -3,7 +3,7 @@
 ps -p ${$} | grep -q 'bash'
 _rc1=${?}
 
-printf "${-}" | grep -q 'i'
+printf '%s' "${-}" | grep -q 'i'
 _rc2=${?}
 
 # Only run if bash and if in interactive shell
