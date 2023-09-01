@@ -15,6 +15,9 @@ set -o pipefail
 
 PATH=/usr/bin:/bin
 
+# Avoid Ansible/Python locale issues
+export LC_ALL='C.UTF-8'
+
 readonly _venv_p='var/venv'
 readonly _venv_activate="${_venv_p}/bin/activate"
 
