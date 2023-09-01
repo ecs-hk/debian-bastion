@@ -42,13 +42,3 @@
       dest: "/etc/rsyslog.d/ansibleplay.conf"
     notify:
       - restart rsyslogd
-
-##############################################################################
-- block:
-##############################################################################
-
-  - name: Ensure rsyslog daemon is running and enabled
-    ansible.builtin.service:
-      name: rsyslog
-      state: started
-      enabled: yes
