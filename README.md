@@ -41,12 +41,12 @@ Clone this repo, then cwd to it and run the prep script, which:
 Optionally configure `./src/extra_vars/custom-local.yml` to modify behavior:
 ```yaml
 ---
-hey_you_read_this: |
-  Uncomment any of the variables below and modify as desired. Doing so
-  will override the role defaults and change the behavior of e.g. sshd
-  or the firewall.
-
-##############################################################################
+###############################################################################
+#                       BASTION SERVER SETTINGS
+#                       -----------------------
+# Uncomment the following variables, and modify as desired, to override role
+# defaults and change the behavior of e.g. sshd or the or the firewall.
+###############################################################################
 #
 #firewall_blackhole_timeout: "8h"
 #sshd_allowed_group: "sshpass"
@@ -59,8 +59,6 @@ hey_you_read_this: |
 #  ...........................................................................
 #
 #sshd_require_fido: false
-#
-##############################################################################
 ```
 
 ----------
