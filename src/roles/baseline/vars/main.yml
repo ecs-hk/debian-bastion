@@ -1,2 +1,3 @@
 ---
-apt_sec_sources: "/etc/apt/security.sources.list"
+apt_dir: "/etc/apt/sources.list.d"
+apt_sec_sources: "{{ apt_dir }}/security.sources"
