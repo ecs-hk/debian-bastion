@@ -3,6 +3,14 @@
 - block:
 ##############################################################################
 
+  - name: Render apt sources
+    ansible.builtin.template:
+      src: "apt-{{ item }}.j2"
+      dest: "{{ apt_dir }}/{{ item }}"
+    with_items:
+      - "main.sources"
+      - "security.sources"
+
   - name: Install baseline packages
     ansible.builtin.apt:
       name: "{{ item }}"
@@ -59,15 +67,6 @@
     ansible.builtin.copy:
       src: "vimrc"
       dest: "/root/.vimrc"
-
-##############################################################################
-- block:
-##############################################################################
-
-  - name: Render {{ apt_sec_sources }}
-    ansible.builtin.template:
-      src: "apt-security-sources.j2"
-      dest: "{{ apt_sec_sources }}"
 
 ##############################################################################
 - block:
