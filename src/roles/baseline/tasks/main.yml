@@ -18,6 +18,10 @@
       - "main.sources"
       - "security.sources"
 
+  - name: Explicitly update apt cache
+    ansible.builtin.apt:
+      update_cache: yes
+
   - name: Install baseline packages
     ansible.builtin.apt:
       name: "{{ item }}"
@@ -33,6 +37,10 @@
       - "systemd-timesyncd"
       - "tmux"
       - "vim"
+
+##############################################################################
+- block:
+##############################################################################
 
   - name: Ensure important services are running and enabled
     ansible.builtin.service:
