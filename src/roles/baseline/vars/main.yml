@@ -1,2 +1,2 @@
 ---
-apt_sec_sources: "/etc/apt/security.sources.list"
+apt_sec_sources: "/etc/apt/sources.list.d/security.sources"
