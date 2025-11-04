@@ -1,0 +1,4 @@
+# Managed by Ansible
+
+# Deliberately empty. This overwrites sources that are configured
+# by a default Debian installation.
