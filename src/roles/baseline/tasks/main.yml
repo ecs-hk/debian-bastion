@@ -3,6 +3,13 @@
 - block:
 ##############################################################################
 
+  - name: Copy blanked-out apt sources from default OS install
+    ansible.builtin.copy:
+      src: "apt-{{ item }}"
+      dest: "{{ apt_dir }}/{{ item }}"
+    with_items:
+      - "debian.sources"
+
   - name: Render apt sources
     ansible.builtin.template:
       src: "apt-{{ item }}.j2"
