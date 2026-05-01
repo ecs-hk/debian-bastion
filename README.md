@@ -58,6 +58,7 @@ Optionally configure `./src/extra_vars/custom-local.yml` to modify behavior:
 #           Violators will prosecuted to the full extent of the law.
 #  ...........................................................................
 #
+#sshd_emergency_user: ""
 #sshd_require_fido: false
 ```
 
