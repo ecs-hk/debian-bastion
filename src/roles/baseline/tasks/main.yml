@@ -21,6 +21,7 @@
   - name: Explicitly update apt cache
     ansible.builtin.apt:
       update_cache: yes
+    changed_when: false
 
   - name: Install baseline packages
     ansible.builtin.apt:
