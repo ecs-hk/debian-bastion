@@ -35,7 +35,7 @@ AuthorizedKeysFile {{ sshd_local_path }}/authorized_keys.%u
 # https://developers.yubico.com/SSH/Securing_SSH_with_FIDO2.html
 PubkeyAcceptedAlgorithms sk-ssh-ed25519@openssh.com
 {% else %}
-PubkeyAcceptedAlgorithms sk-ssh-ed25519@openssh.com,ssh-ed25519,rsa-sha2-512,rsa-sha2-256
+PubkeyAcceptedAlgorithms sk-ssh-ed25519@openssh.com,ssh-ed25519
 {% endif %}
 
 HostbasedAuthentication no
